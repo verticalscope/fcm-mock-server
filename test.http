@@ -1,0 +1,24 @@
+POST http://127.0.0.1:3000/send HTTP/1.1
+Authorization: key=asdasdlkjaskldbabdknasdnaslndlasndl'k
+Content-Type: application/json
+
+{
+    "to": "123123",
+    "data": {
+        "click_action": "FLUTTER_NOTIFICATION_CLICK",
+	    "action": "add",
+        "itemtype": "shipping",
+        "value": ""
+    },
+    "notification": {
+        "title": "aaaaa"
+    }
+}
+
+###
+
+GET http://127.0.0.1:3000/log HTTP/1.1
+
+###
+
+PUT http://127.0.0.1:3000/clearlog HTTP/1.1
