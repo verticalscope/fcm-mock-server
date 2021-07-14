@@ -7,16 +7,10 @@ import (
 )
 
 type Message struct {
-	To           string       `json:"to"`
-	Notification Notification `json:"notification"`
-	Data         Data         `json:"data"`
-}
-
-type Data struct {
-	Click_action string `json:"click_action"`
-	Action       string `json:"action"`
-	Itemtype     string `json:"itemtype"`
-	Value        string `json:"value"`
+	To           string            `json:"to"`
+	Notification Notification      `json:"notification"`
+	Data         map[string]string `json:"data"`
+	Time         string            `json:"time"`
 }
 
 type Notification struct {
@@ -24,17 +18,7 @@ type Notification struct {
 	Body  string `json:"body"`
 }
 
-type Activity struct {
-	Device_token string `json:"device_token"`
-	Title        string `json:"title"`
-	Click_action string `json:"click_action"`
-	Action       string `json:"action"`
-	Itemtype     string `json:"itemtype"`
-	Value        string `json:"value"`
-	Time         string `json:"time"`
-}
-
-var activities []Activity
+var messages []Message
 
 func main() {
 	app := fiber.New()
@@ -56,24 +40,16 @@ func send(c *fiber.Ctx) error {
 		return c.Status(400).SendString(err.Error())
 	}
 	currentTime := time.Now()
-	activity := Activity{
-		Action:       message.Data.Action,
-		Device_token: message.To,
-		Title:        message.Notification.Title,
-		Click_action: message.Data.Click_action,
-		Itemtype:     message.Data.Itemtype,
-		Value:        message.Data.Value,
-		Time:         currentTime.Format("2006-01-02 15:04:05"),
-	}
-	activities = append(activities, activity)
+	message.Time = currentTime.Format("2006-01-02 15:04:05")
+	messages = append(messages, *message)
 	return c.SendStatus(200)
 }
 
 func log(c *fiber.Ctx) error {
-	return c.JSON(activities)
+	return c.JSON(messages)
 }
 
 func clear(c *fiber.Ctx) error {
-	activities = nil
+	messages = nil
 	return c.SendStatus(200)
 }

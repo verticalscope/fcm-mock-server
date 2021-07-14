@@ -1,4 +1,4 @@
-POST http://127.0.0.1:3000/send HTTP/1.1
+POST http://127.0.0.1:4004/send HTTP/1.1
 Authorization: key=asdasdlkjaskldbabdknasdnaslndlasndl'k
 Content-Type: application/json
 
@@ -17,8 +17,8 @@ Content-Type: application/json
 
 ###
 
-GET http://127.0.0.1:3000/log HTTP/1.1
+GET http://127.0.0.1:4004/log HTTP/1.1
 
 ###
 
-PUT http://127.0.0.1:3000/clearlog HTTP/1.1
+PUT http://127.0.0.1:4004/clearlog HTTP/1.1
