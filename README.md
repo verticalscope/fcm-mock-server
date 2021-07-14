@@ -24,7 +24,7 @@ Endpoints:
 * **PUT** */clearlog* - clear messages history
 
 ## Message model
-```json
+```js
 {
 	"to": "123",    // device token or topic
     "data": {       // [string]string dictionary
