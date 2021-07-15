@@ -20,8 +20,8 @@ go run main.go
 
 Endpoints:
 * **POST** */send* - send message to the mock (200 response)
-* **GET** */log* - returns (as `JSON`) history of `FCM` API calls to this mock
-* **PUT** */clearlog* - clear messages history
+* **GET** */messages* - returns (as `JSON`) history of `FCM` API calls to this mock
+* **DELETE** */messages* - clear messages history
 
 ## Message model
 ```js

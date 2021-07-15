@@ -24,8 +24,8 @@ func main() {
 	app := fiber.New()
 
 	app.Post("/send", send)
-	app.Put("/clearlog", clear)
-	app.Get("/log", log)
+	app.Delete("/messages", clear)
+	app.Get("/messages", log)
 
 	app.Listen(":4004")
 }
