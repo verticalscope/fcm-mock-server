@@ -1,12 +1,25 @@
-FROM golang:alpine
-RUN mkdir /app
-ADD . /app/
+FROM golang:latest as builder
+
+# Set Environment Variables
+ENV HOME /app
+ENV CGO_ENABLED 0
+ENV GOOS linux
+
 WORKDIR /app
-COPY go.mod .
-COPY go.sum .
+COPY go.mod go.sum ./
 RUN go mod download
-RUN go build -o main .
-RUN adduser -S -D -H -h /app appuser
-USER appuser
+COPY . .
+
+# Build app
+RUN go build -a -installsuffix cgo -o main .
+
+FROM alpine:latest
+
+WORKDIR /root/
+
+# Copy the pre-built binary file from the previous stage
+COPY --from=builder /app/main .
+
 EXPOSE 4004
-CMD ["./main"]
+
+CMD [ "./main" ]
