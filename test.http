@@ -17,8 +17,29 @@ Content-Type: application/json
 
 ###
 
-GET http://127.0.0.1:4004/log HTTP/1.1
+POST http://127.0.0.1:4004/v1/projects/my-awesome-project/messages:send HTTP/1.1
+Authorization: Bearer asdasdlkjaskldbabdknasdnaslndlasndl'k
+Content-Type: application/json
+
+{
+    "Message" : {
+        "token": "123123",
+        "data": {
+            "click_action": "FLUTTER_NOTIFICATION_CLICK",
+            "action": "add",
+            "itemtype": "shipping",
+            "value": ""
+        },
+        "notification": {
+            "title": "aaaaa"
+        }
+    }
+}
 
 ###
 
-PUT http://127.0.0.1:4004/clearlog HTTP/1.1
+GET http://127.0.0.1:4004/api/messages HTTP/1.1
+
+###
+
+DELETE http://127.0.0.1:4004/api/messages HTTP/1.1
