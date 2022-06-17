@@ -6,10 +6,14 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
 type MessageV1 struct {
-	Message Message `json:"Message"`
+	Message      Message `json:"Message"`
+	ValidateOnly bool    `json:"validate_only,omitempty"`
+	Project      string  `json:"project,omitempty"`
+	Time         string  `json:"time"`
 }
 
 type Message struct {
@@ -18,10 +22,8 @@ type Message struct {
 	Token         string            `json:"token,omitempty"`
 	Topic         string            `json:"topic,omitempty"`
 	Condition     string            `json:"condition,omitempty"`
-	Project       string            `json:"project,omitempty"`
 	Notification  Notification      `json:"notification"`
 	Data          map[string]string `json:"data,omitempty"`
-	Time          string            `json:"time"`
 }
 
 type Notification struct {
@@ -29,34 +31,21 @@ type Notification struct {
 	Body  string `json:"body"`
 }
 
-var messages []Message
+var messages []MessageV1
 
 func main() {
+	messages = []MessageV1{}
 	app := fiber.New()
 
-	app.Post("/send", send)
+	// Default middleware config
+	app.Use(logger.New())
+
 	app.Post("/v1/projects/:project_id/messages\\:send", sendV1)
-	app.Delete("/api/messages", clear)
-	app.Get("/api/messages", log)
+	app.Delete("/api/messages", deleteMessages)
+	app.Get("/api/messages", getMessages)
 
 	app.Listen(":4004")
 }
-
-func send(c *fiber.Ctx) error {
-	auth := c.Get("Authorization")
-	if len(auth) == 0 || !strings.HasPrefix(auth, "key=") {
-		return c.SendStatus(401)
-	}
-	message := new(Message)
-	if err := c.BodyParser(message); err != nil {
-		return c.Status(400).SendString(err.Error())
-	}
-	currentTime := time.Now()
-	message.Time = currentTime.Format("2006-01-02 15:04:05")
-	messages = append(messages, *message)
-	return c.SendStatus(200)
-}
-
 func sendV1(c *fiber.Ctx) error {
 	auth := c.Get("Authorization")
 	if len(auth) == 0 || !strings.HasPrefix(auth, "Bearer") {
@@ -66,15 +55,14 @@ func sendV1(c *fiber.Ctx) error {
 	if err := c.BodyParser(messageV1); err != nil {
 		return c.Status(400).SendString(err.Error())
 	}
-	message := messageV1.Message
 	currentTime := time.Now()
-	message.Time = currentTime.Format("2006-01-02 15:04:05")
-	message.Project = c.Params("project_id")
-	messages = append(messages, message)
-	return c.SendStatus(200)
+	messageV1.Time = currentTime.Format("2006-01-02 15:04:05")
+	messageV1.Project = c.Params("project_id")
+	messages = append(messages, *messageV1)
+	return c.Status(200).SendString("{}")
 }
 
-func log(c *fiber.Ctx) error {
+func getMessages(c *fiber.Ctx) error {
 	sort.SliceStable(messages, func(i, j int) bool {
 		return messages[i].Time > messages[j].Time
 	})
@@ -82,7 +70,7 @@ func log(c *fiber.Ctx) error {
 	return c.JSON(messages)
 }
 
-func clear(c *fiber.Ctx) error {
-	messages = nil
+func deleteMessages(c *fiber.Ctx) error {
+	messages = []MessageV1{}
 	return c.SendStatus(200)
 }
