@@ -1,40 +1,31 @@
 package main
 
 import (
-	"sort"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/google/uuid"
 )
 
-type MessageV1 struct {
-	Message      Message `json:"Message"`
-	ValidateOnly bool    `json:"validate_only,omitempty"`
-	Project      string  `json:"project,omitempty"`
-	Time         string  `json:"time"`
+type Payload struct {
+	Project     string         `json:"project"`
+	Time        time.Time      `json:"time"`
+	Name        string         `json:"name"`
+	RequestBody FCMRequestBody `json:"requestBody"`
 }
 
-type Message struct {
-	Authorization string            `json:"authorization,omitempty"`
-	To            string            `json:"to,omitempty"`
-	Token         string            `json:"token,omitempty"`
-	Topic         string            `json:"topic,omitempty"`
-	Condition     string            `json:"condition,omitempty"`
-	Notification  Notification      `json:"notification"`
-	Data          map[string]string `json:"data,omitempty"`
+type FCMRequestBody struct {
+	Message      map[string]interface{} `json:"message"`
+	ValidateOnly bool                   `json:"validate_only,omitempty"`
 }
 
-type Notification struct {
-	Title string `json:"title"`
-	Body  string `json:"body"`
-}
-
-var messages []MessageV1
+var payloads []Payload
 
 func main() {
-	messages = []MessageV1{}
+	payloads = []Payload{}
 	app := fiber.New()
 
 	// Default middleware config
@@ -42,35 +33,45 @@ func main() {
 
 	app.Post("/v1/projects/:project_id/messages\\:send", sendV1)
 	app.Delete("/api/messages", deleteMessages)
-	app.Get("/api/messages", getMessages)
+	app.Get("/api/messages", getPayloads)
 
 	app.Listen(":4004")
 }
+
 func sendV1(c *fiber.Ctx) error {
 	auth := c.Get("Authorization")
 	if len(auth) == 0 || !strings.HasPrefix(auth, "Bearer") {
 		return c.SendStatus(401)
 	}
-	messageV1 := new(MessageV1)
-	if err := c.BodyParser(messageV1); err != nil {
+	requestBody := new(FCMRequestBody)
+	if err := c.BodyParser(requestBody); err != nil {
 		return c.Status(400).SendString(err.Error())
 	}
-	currentTime := time.Now()
-	messageV1.Time = currentTime.Format("2006-01-02 15:04:05")
-	messageV1.Project = c.Params("project_id")
-	messages = append(messages, *messageV1)
-	return c.Status(200).SendString("{}")
+
+	projectID := c.Params("project_id")
+	name := fmt.Sprintf("projects/%s/messages/%s", projectID, uuid.New())
+
+	payload := Payload{
+		Time:        time.Now(),
+		Project:     projectID,
+		Name:        name,
+		RequestBody: *requestBody,
+	}
+
+	payloads = append(payloads, payload)
+
+	responseBody := map[string]interface{}{
+		"name": name,
+	}
+
+	return c.Status(200).JSON(responseBody)
 }
 
-func getMessages(c *fiber.Ctx) error {
-	sort.SliceStable(messages, func(i, j int) bool {
-		return messages[i].Time > messages[j].Time
-	})
-
-	return c.JSON(messages)
+func getPayloads(c *fiber.Ctx) error {
+	return c.JSON(payloads)
 }
 
 func deleteMessages(c *fiber.Ctx) error {
-	messages = []MessageV1{}
+	payloads = []Payload{}
 	return c.SendStatus(200)
 }
